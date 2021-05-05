@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">全家发票姬</string>
+    <string name="button_scan">扫码</string>
+    <string name="button_send">发送</string>
+    <string name="edit_message">输入消息</string>
+</resources>
