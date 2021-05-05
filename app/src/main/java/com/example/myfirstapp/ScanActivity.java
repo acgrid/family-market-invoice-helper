@@ -2,6 +2,7 @@ package com.example.myfirstapp;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
@@ -12,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
 import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
@@ -24,10 +26,18 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.common.InputImage;
 
+import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class ScanActivity extends AppCompatActivity {
     private static final String TAG = "SCAN";
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageAnalysis imageAnalysis;
+    private Pattern outerPattern = Pattern.compile("q=(.+)$");
+    private Pattern innerPattern = Pattern.compile("on=(\\d+)");
+    private Base64.Decoder decoder = Base64.getUrlDecoder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,17 +75,27 @@ public class ScanActivity extends AppCompatActivity {
             if (image != null) {
                 InputImage inputImage = InputImage.fromMediaImage(image, imageProxy.getImageInfo().getRotationDegrees());
                 scanner.process(inputImage)
-                        .addOnCompleteListener(task -> {
-                            Log.i(TAG, task.toString());
-                            imageProxy.close();
-                        })
+                        .addOnCompleteListener(task -> imageProxy.close())
                         .addOnSuccessListener(barCodes -> {
                             for (Barcode barcode: barCodes) {
-                                Log.d(TAG, barcode.getRawValue());
-                                if (barcode.getValueType() == Barcode.TYPE_URL) {
-                                    // http://fpj.datarj.com/einv/fm?q=b249MDQyODIzNTYwMDA3MDA4NTE5MjAxJnNpPTVjZjU3Yjc4MGFhOTc2ZTVmNjlmYzVlYjFlM2NlMzIw
-                                    // on=042823560007008519201&si=5cf57b780aa976e5f69fc5eb1e3ce320
-                                    Toast.makeText(getApplicationContext(), barcode.getUrl().getUrl(), Toast.LENGTH_LONG).show();
+                                String url = barcode.getRawValue();
+                                if (url == null) continue;
+                                Log.d(TAG, url);
+                                Matcher matcher = outerPattern.matcher(url.trim());
+                                if (matcher.find()) {
+                                    String q = matcher.group(1);
+                                    Log.i(TAG, q);
+                                    if (q != null) {
+                                        String query = new String(decoder.decode(q));
+                                        Log.i(TAG, query);
+                                        if (query.length() > 10) {
+                                            Matcher innerMatcher = innerPattern.matcher(query);
+                                            if (innerMatcher.find()) {
+                                                String orderNo = innerMatcher.group(1);
+                                                Toast.makeText(getApplicationContext(), orderNo, Toast.LENGTH_LONG).show();
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         })
