@@ -12,6 +12,8 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,6 +35,7 @@ import java.util.regex.Pattern;
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class ScanActivity extends AppCompatActivity {
     private static final String TAG = "SCAN";
+    private static final int REQUEST_CODE = 42;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageAnalysis imageAnalysis;
     private final Pattern outerPattern = Pattern.compile("q=(.+)$");
@@ -43,8 +46,19 @@ public class ScanActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan);
-        initScanner();
-        initCamera();
+        requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (grantResults.length < 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            finish();
+            return;
+        }
+        if (requestCode == REQUEST_CODE) {
+            initScanner();
+            initCamera();
+        }
     }
 
     void initCamera () {
