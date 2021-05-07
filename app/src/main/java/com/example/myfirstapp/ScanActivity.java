@@ -35,9 +35,9 @@ public class ScanActivity extends AppCompatActivity {
     private static final String TAG = "SCAN";
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageAnalysis imageAnalysis;
-    private Pattern outerPattern = Pattern.compile("q=(.+)$");
-    private Pattern innerPattern = Pattern.compile("on=(\\d+)");
-    private Base64.Decoder decoder = Base64.getUrlDecoder();
+    private final Pattern outerPattern = Pattern.compile("q=(.+)$");
+    private final Pattern innerPattern = Pattern.compile("on=(\\d+)");
+    private final Base64.Decoder decoder = Base64.getUrlDecoder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
